@@ -59,16 +59,24 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy necessary files from builder
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/prisma ./prisma
+# Copy package files
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/next.config.ts ./next.config.ts
 
-# Copy standalone build output
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Copy public folder
+COPY --from=builder /app/public ./public
+
+# Copy prisma schema
+COPY --from=builder /app/prisma ./prisma
 
 # Copy generated Prisma Client (custom location)
 COPY --from=builder --chown=nextjs:nodejs /app/lib/generated ./lib/generated
+
+# Copy node_modules
+COPY --from=builder /app/node_modules ./node_modules
+
+# Copy Next.js build output - use the main .next folder, not standalone
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 
 USER nextjs
 
@@ -77,8 +85,9 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Health check
+# Health check (optional - remove if no health endpoint)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" || exit 1
+  CMD node -e "require('http').get('http://localhost:3000/', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" || exit 1
 
-CMD ["node", "server.js"]
+# Use Next.js start command instead of standalone server.js
+CMD ["node_modules/.bin/next", "start"]

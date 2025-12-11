@@ -53,9 +53,9 @@ jobs:
       - name: Docker Dry Run (Build without Push)
         run: |
           docker build \
-            --build-arg DATABASE_URL="postgresql://user:pass@localhost:5432/db?schema=public" \
-            --build-arg NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_placeholder" \
-            --build-arg CLERK_SECRET_KEY="sk_test_placeholder" \
+            --build-arg DATABASE_URL="${{ secrets.DATABASE_URL || 'postgresql://user:pass@localhost:5432/db?schema=public' }}" \
+            --build-arg NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder' }}" \
+            --build-arg CLERK_SECRET_KEY="${{ secrets.CLERK_SECRET_KEY || 'sk_test_placeholder' }}" \
             -t ${{ github.repository }}:pr-${{ github.event.pull_request.number }} \
             -f Dockerfile \
             .
