@@ -52,7 +52,7 @@ function WorkFlowCard({ workflowData }: { workflowData: Workflow }) {
           <div>
             <h3 className="text-base font-bold text-muted-foreground flex items-center">
               <Link
-                href={`/workflows/editor/${workflowData.id}`}
+                href={`/workflow/editor/${workflowData.id}`}
                 className="
             flex items-center hover:underline"
               >
