@@ -1,8 +1,9 @@
-'use server';
+"use server";
 
 import prisma from "@/lib/prisma";
 import { WorkflowStatus } from "@/types/workflows/workflow";
 import { auth } from "@clerk/nextjs/server";
+import { revalidatePath } from "next/cache";
 
 export async function UpdateWorkFlow({
   id,
@@ -41,4 +42,6 @@ export async function UpdateWorkFlow({
       userId,
     },
   });
+
+  revalidatePath(`/workflows`);
 }

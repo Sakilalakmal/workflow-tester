@@ -23,6 +23,7 @@ function SaveButton({ workflowId }: { workflowId: string }) {
 
   return (
     <Button
+      disabled={isPending}
       variant={"default"}
       onClick={() => {
         const workflowDefinition = JSON.stringify(toObject());
