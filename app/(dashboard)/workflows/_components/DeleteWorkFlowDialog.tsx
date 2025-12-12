@@ -45,21 +45,22 @@ function DeleteWorkFlowDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Are you sure about this?</AlertDialogTitle>
-          <AlertDialogDescription>
-            {" "}
-            This action cannot be undone. This will permanently delete the
-            workflow.
-            <div className="flex flex-col py-4 gap-4">
-              <p className="text-sm text-muted-foreground">
-                if you are sure about this enter <b>{workFlowName}</b> to
-                confirm delete
-              </p>
+          <AlertDialogDescription asChild>
+            <div>
+              This action cannot be undone. This will permanently delete the
+              workflow.
+              <div className="flex flex-col py-4 gap-4">
+                <p className="text-sm text-muted-foreground">
+                  if you are sure about this enter <b>{workFlowName}</b> to
+                  confirm delete
+                </p>
 
-              <Input
-                placeholder="confirm worklflow name"
-                value={confirmText}
-                onChange={(e) => setConfirmText(e.target.value)}
-              />
+                <Input
+                  placeholder="confirm worklflow name"
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value)}
+                />
+              </div>
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
