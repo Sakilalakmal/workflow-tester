@@ -19,9 +19,15 @@ import "@xyflow/react/dist/style.css";
 import NodeComponent from "./nodes/NodeComponents";
 import { useCallback, useEffect } from "react";
 import { AppNode } from "@/types/workflows/Nodes/nodes";
+import DeletableEdge from "./edges/DeletableEdge";
+import { TaskRegistry } from "@/lib/workflow/task/registry";
 
 const nodeTypes = {
   FlowScrapeNode: NodeComponent,
+};
+
+const edgeTypes = {
+  default: DeletableEdge,
 };
 
 const snapGrid: [number, number] = [50, 50];
@@ -31,7 +37,7 @@ function FlowEditor({ workflow }: { workflow: Workflow }) {
   const [nodes, setNodes, onNodesChange] = useNodesState<AppNode>([]);
   const [edges, setEdge, onEdgeChange] = useEdgesState<Edge>([]);
 
-  const { setViewport, screenToFlowPosition } = useReactFlow();
+  const { setViewport, screenToFlowPosition, updateNodeData } = useReactFlow();
 
   useEffect(() => {
     try {
@@ -73,8 +79,55 @@ function FlowEditor({ workflow }: { workflow: Workflow }) {
   const onConnect = useCallback(
     (connection: Connection) => {
       setEdge((edges) => addEdge({ ...connection, animated: true }, edges));
+
+      if (!connection.targetHandle) return;
+
+      const node = nodes.find((n) => n.id === connection.target);
+
+      if (!node) return;
+
+      const nodeInputs = node.data.inputs;
+
+      updateNodeData(node.id, {
+        inputs: {
+          ...nodeInputs,
+          [connection.targetHandle]: "",
+        },
+      });
     },
-    [setEdge]
+    [setEdge, nodes, updateNodeData]
+  );
+
+  const isValidConnection = useCallback(
+    (connection: Edge | Connection) => {
+      if (connection.source === connection.target) {
+        return false;
+      }
+
+      const source = nodes.find((node) => node.id === connection.source);
+      const target = nodes.find((node) => node.id === connection.target);
+
+      if (!source || !target) {
+        return false;
+      }
+
+      const sourceTask = TaskRegistry[source.data.type];
+      const targetTask = TaskRegistry[target.data.type];
+
+      const sourceOutput = sourceTask.outputs.find(
+        (output) => output.name === connection.sourceHandle
+      );
+      const targetInput = targetTask.inputs.find(
+        (input) => input.name === connection.targetHandle
+      );
+
+      if (targetInput?.type !== sourceOutput?.type) {
+        return false;
+      }
+
+      return true;
+    },
+    [nodes]
   );
 
   return (
@@ -88,10 +141,12 @@ function FlowEditor({ workflow }: { workflow: Workflow }) {
         onDragOver={onDragOver}
         fitView
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         snapToGrid={true}
         snapGrid={snapGrid}
         fitViewOptions={fitViewOptions}
         onConnect={onConnect}
+        isValidConnection={isValidConnection}
       >
         <Controls position="top-left" fitViewOptions={fitViewOptions} />
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
