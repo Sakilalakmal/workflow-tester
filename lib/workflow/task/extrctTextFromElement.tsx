@@ -1,5 +1,6 @@
 import { TaskParamType, TaskType } from "@/types/workflows/Nodes/taks-types";
-import { Code2Icon, Globe2Icon, LucideProps, TextWrapIcon } from "lucide-react";
+import { WorkflowTasks } from "@/types/workflows/workflow";
+import { LucideProps, TextWrapIcon } from "lucide-react";
 
 export const ExtractTextFromElement = {
   type: TaskType.EXTRACT_TEXT_FROM_ELEMENT,
@@ -27,4 +28,5 @@ export const ExtractTextFromElement = {
       type: TaskParamType.STRING,
     },
   ],
-};
+  credits: 3,
+} satisfies WorkflowTasks;
