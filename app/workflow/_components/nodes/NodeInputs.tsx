@@ -3,22 +3,30 @@ import { TaskParam } from "@/types/workflows/Nodes/taks-types";
 import { Handle, Position } from "@xyflow/react";
 import { ReactNode } from "react";
 import { NodeParamField } from "./NodeParamField";
+import { CoolorHandle } from "./Common";
 
 export function NodeInputs({ children }: { children: ReactNode }) {
   return <div className="flex flex-col divide-y gap-2">{children}</div>;
 }
 
-export function NodeInput({ input , nodeId }: { input: TaskParam ,nodeId:string }) {
+export function NodeInput({
+  input,
+  nodeId,
+}: {
+  input: TaskParam;
+  nodeId: string;
+}) {
   return (
     <div className="flex justify-start relative p-3 bg-secondary w-full">
-        <NodeParamField param={input} nodeId={nodeId}/>
+      <NodeParamField param={input} nodeId={nodeId} />
       {!input.hideHandle && (
         <Handle
           id={input.name}
           type="target"
           position={Position.Left}
           className={cn(
-            "bg-muted-foreground! border-2! border-background! left-2! w-4! h-4!"
+            "bg-muted-foreground! border-2! border-background! -left-1! w-4! h-4!",
+            CoolorHandle[input.type]
           )}
         />
       )}
