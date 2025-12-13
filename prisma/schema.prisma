@@ -22,9 +22,41 @@ model Workflow {
   definition String
   status     String @default("draft")
 
+  executions WorkflowExecution[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   //user cannot have workflow with same name
   @@unique([userId, name])
+}
+
+model WorkflowExecution {
+  id          String           @id @default(cuid())
+  workflowId  String
+  userId      String
+  trigger     String
+  status      String
+  createdAt   DateTime         @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+  workflow    Workflow         @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  phases      executionPhase[]
+}
+
+model executionPhase {
+  id           String    @id @default(cuid())
+  userId       String
+  status       String
+  number       Int
+  node         String
+  name         String
+  startedAt    DateTime?
+  comepletedAt DateTime?
+  inputs       String?
+  outputs      String?
+
+  creditsCost         Int?
+  workflowExecutionId String
+  workflowExecution   WorkflowExecution @relation(fields: [workflowExecutionId], references: [id], onDelete: Cascade)
 }

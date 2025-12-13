@@ -4,7 +4,6 @@ import { Handle, Position, useEdges } from "@xyflow/react";
 import { ReactNode } from "react";
 import { NodeParamField } from "./NodeParamField";
 import { CoolorHandle } from "./Common";
-import { is } from "zod/v4/locales";
 import useFlowValidation from "@/components/hooks/useFlowValidation";
 
 export function NodeInputs({ children }: { children: ReactNode }) {
