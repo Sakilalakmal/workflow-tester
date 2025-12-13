@@ -22,13 +22,13 @@ async function ExecutionPage({
       <Topbar
         workflowId={workflowId}
         title="Your workflow details"
-        subtitle="see all details about your workflow"
+        subtitle={` Run ID = ${workflowId}`}
         hideButtons
       />
       <section className="flex h-full overflow-auto">
         <Suspense
           fallback={
-            <div className="flex w-full justify-center">
+            <div className="flex w-full h-full items-center justify-center">
               <Loader2 className="size-4 animate-spin" />
             </div>
           }
@@ -55,7 +55,7 @@ async function ExecutionVievWrapper({ executionId }: { executionId: string }) {
     throw new Error("Workflow execution not found");
   }
 
-  return <ExecutionView/>;
+  return <ExecutionView workflowexecution={workflowExecution} />;
 }
 
 export default ExecutionPage;

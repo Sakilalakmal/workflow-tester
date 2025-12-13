@@ -6,18 +6,23 @@ import { Button } from "@/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { useReactFlow } from "@xyflow/react";
 import { PlayCircleIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
 
 function ExcuteButton({ workflowId }: { workflowId: string }) {
   const generate = useExecutionPlan();
   const { toObject } = useReactFlow();
+  const router = useRouter();
+  
   const { mutate: planMutation, isPending } = useMutation({
     mutationFn: RunWorkFlow,
-    onSuccess: () => {
+    onSuccess: (execution) => {
       toast.success("Workflow execution started", { id: "workflow_execution" });
+      router.push(`/workflow/runs/${workflowId}/${execution.id}`);
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Error starting workflow execution:", error);
       toast.error("Failed to start workflow execution", {
         id: "workflow_execution",
       });
@@ -34,6 +39,9 @@ function ExcuteButton({ workflowId }: { workflowId: string }) {
         if (!plan) {
           return;
         }
+        toast.loading("Starting workflow execution...", {
+          id: "workflow_execution",
+        });
         planMutation({ workflowId, definition: JSON.stringify(toObject()) });
       }}
     >
