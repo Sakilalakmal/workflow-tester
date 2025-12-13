@@ -75,27 +75,32 @@ export function FlowToExecutionPlan(
         continue;
       }
 
-      const isValidInput = getInvalidInputs(currentNodes, edges, planned);
-      if (isValidInput.length > 0) {
+      const invalidInputs = getInvalidInputs(currentNodes, edges, planned);
+      if (invalidInputs.length > 0) {
         const incomers = getIncomers(currentNodes, nodes, edges);
 
         if (incomers.every((incomer) => planned.has(incomer.id))) {
+          // All dependencies are planned, but inputs are still invalid
           inputsWithErrors.push({
             nodeId: currentNodes.id,
-            inputs: isValidInput,
+            inputs: invalidInputs,
           });
         }
-      } else {
+        // Skip this node for now if it has invalid inputs
         continue;
       }
 
+      // Node has valid inputs, add it to this phase
       nextPhase.nodes.push(currentNodes);
     }
 
     for (const node of nextPhase.nodes) {
       planned.add(node.id);
     }
-    executionPlan.push(nextPhase);
+    
+    if (nextPhase.nodes.length > 0) {
+      executionPlan.push(nextPhase);
+    }
   }
 
   if (inputsWithErrors.length > 0) {
