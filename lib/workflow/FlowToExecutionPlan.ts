@@ -3,8 +3,16 @@ import {
   WorkflowExecutionPlan,
   WorkflowExecutionPlanPhase,
 } from "@/types/workflows/workflow";
-import { Edge } from "@xyflow/react";
 import { TaskRegistry } from "./task/registry";
+
+// Define Edge type locally to avoid React Flow client-side dependency
+type Edge = {
+  id: string;
+  source: string;
+  target: string;
+  sourceHandle?: string | null;
+  targetHandle?: string | null;
+};
 
 export enum FlowToExecutionPlanValidationErrorType {
   NO_ENTRY_POINT = "NO_ENTRY_POINT",
