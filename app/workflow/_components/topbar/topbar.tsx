@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import SaveButton from "./SaveButton";
+import ExcuteButton from "./ExcuteButton";
 
 interface Props {
   title: string;
@@ -12,7 +13,7 @@ interface Props {
   workflowId: string;
 }
 
-function Topbar({ title, subtitle , workflowId}: Props) {
+function Topbar({ title, subtitle, workflowId }: Props) {
   const router = useRouter();
   return (
     <header className="flex p-2 border-b-2 border-separate w-full h-[60px] sticky top-0 bg-background z-10">
@@ -38,7 +39,8 @@ function Topbar({ title, subtitle , workflowId}: Props) {
         </div>
       </div>
       <div className="flex gap-1 flex-1 justify-end">
-        <SaveButton workflowId={workflowId}/>
+        <ExcuteButton workflowId={workflowId} />
+        <SaveButton workflowId={workflowId} />
       </div>
     </header>
   );
