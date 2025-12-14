@@ -1,6 +1,6 @@
 import { executionPhase } from "./generated/prisma/client";
 
-type Phase = Pick<executionPhase, "creditsCost">;
+type Phase = Pick<executionPhase, "creditsConsumed">;
 export function GetPhasesCosts(phases: Phase[]) {
-  return phases.reduce((total, phase) => total + (phase.creditsCost || 0), 0);
+  return phases.reduce((total, phase) => total + (phase.creditsConsumed || 0), 0);
 }
