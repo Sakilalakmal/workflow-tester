@@ -16,12 +16,13 @@ import {
   WorkflowIcon,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DateToDurationString } from "@/lib/DateToDurationString";
 import { GetPhasesCosts } from "@/lib/GetPhasesCosts";
+import { GetWorkFlowPhaseDetails } from "@/actions/workflows/get-wrokflow-details";
 
 type ExecutionData = WorkflowExecution & {
   phases: executionPhase[];
@@ -32,6 +33,8 @@ function ExecutionView({
 }: {
   workflowexecution: ExecutionData | null;
 }) {
+  const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
+
   const query = useQuery({
     queryKey: ["workflowExecution", workflowexecution?.id],
     initialData: workflowexecution,
@@ -50,6 +53,14 @@ function ExecutionView({
     query.data?.completedAt,
     query.data?.startedAt
   );
+
+  const isRunning = query.data?.status === WorkflowExecutionStatus.RUNNING;
+
+  const phaseDetails = useQuery({
+    queryKey: ["phaseDetails", selectedPhase],
+    enabled: selectedPhase !== null,
+    queryFn: () => GetWorkFlowPhaseDetails(selectedPhase || ""),
+  });
 
   const creditsConsumed = GetPhasesCosts(query.data?.phases || []);
 
@@ -100,7 +111,10 @@ function ExecutionView({
             <Button
               key={index}
               className="w-full justify-between cursor-pointer"
-              variant={"ghost"}
+              variant={selectedPhase === phase.id ? "default" : "ghost"}
+              onClick={() => {
+                setSelectedPhase(phase.id);
+              }}
             >
               <div className="flex items-center gap-2">
                 <Badge variant="secondary">{index + 1}</Badge>
@@ -111,6 +125,9 @@ function ExecutionView({
           ))}
         </div>
       </aside>
+      <div className="flex w-full h-full">
+        <pre>{JSON.stringify(phaseDetails.data, null, 2)}</pre>
+      </div>
     </div>
   );
 }

@@ -9,6 +9,7 @@ import {
   WorkflowExecutionTrigger,
 } from "@/types/workflows/workflow";
 import { auth } from "@clerk/nextjs/server";
+import { ExecuteWorkFlow } from "@/lib/workflow/ExecuteWorkflow";
 
 export async function RunWorkFlow(form: {
   workflowId: string;
@@ -89,7 +90,12 @@ export async function RunWorkFlow(form: {
     if (!execution) {
       throw new Error("workflow execution not created");
     }
-
+    
+    // Execute the workflow asynchronously
+    ExecuteWorkFlow(execution.id).catch((error) => {
+      console.error("Error executing workflow:", error);
+    });
+    
     return execution;
   } catch (error) {
     console.error("Error creating workflow execution:", error);
