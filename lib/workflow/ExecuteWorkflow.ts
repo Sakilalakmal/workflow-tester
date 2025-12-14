@@ -6,9 +6,16 @@ import {
   ExecutionPhasedStatus,
   WorkflowExecutionStatus,
 } from "@/types/workflows/workflow";
-import { executionPhase } from "../generated/prisma/client";
+import { executionPhase, Prisma } from "../generated/prisma/client";
 import { AppNode } from "@/types/workflows/Nodes/nodes";
 import { TaskRegistry } from "./task/registry";
+
+type WorkflowExecutionWithPhases = Prisma.WorkflowExecutionGetPayload<{
+  include: {
+    workflow: true;
+    phases: true;
+  };
+}>;
 
 export async function ExecuteWorkFlow(executionId: string) {
   const execution = await prisma.workflowExecution.findUnique({
@@ -79,11 +86,11 @@ async function initializeWorkflowExecution(
   });
 }
 
-async function intializephaseStatus(execution: any) {
+async function intializephaseStatus(execution: WorkflowExecutionWithPhases) {
   await prisma.executionPhase.updateMany({
     where: {
       id: {
-        in: execution.phases.map((phase: any) => phase.id),
+        in: execution.phases.map((phase) => phase.id),
       },
     },
     data: {
