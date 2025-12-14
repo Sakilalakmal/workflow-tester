@@ -11,10 +11,8 @@ import { TaskRegistry } from "./task/registry";
 import { ExecutorRegistry } from "../ExecutorRegistry";
 import { EnvironmentType, ExecutionEnvironmentType } from "@/types/Executor";
 import { TaskParamType } from "@/types/workflows/Nodes/taks-types";
-import { get } from "http";
-import { set } from "zod";
 import { Browser, Page } from "puppeteer";
-import { env } from "process";
+import { Edge } from "@xyflow/react";
 
 type WorkflowExecutionWithPhases = Prisma.WorkflowExecutionGetPayload<{
   include: {
@@ -38,6 +36,8 @@ export async function ExecuteWorkFlow(executionId: string) {
     throw new Error("Execution not found");
   }
 
+  const edges = JSON.parse(execution.workflow.definition).edges as Edge[];
+
   const environment: EnvironmentType = { phases: {} };
 
   await initializeWorkflowExecution(executionId, execution.workflowId);
@@ -48,7 +48,7 @@ export async function ExecuteWorkFlow(executionId: string) {
   let executionFailed = false;
   for (const phase of execution.phases) {
     // Execute each phase
-    const phaseExecution = await executePhase(phase, environment);
+    const phaseExecution = await executePhase(phase, environment, edges);
     creditsConsumed += phaseExecution.creditsConsumed;
     if (!phaseExecution.success) {
       executionFailed = true;
@@ -109,11 +109,12 @@ async function intializephaseStatus(execution: WorkflowExecutionWithPhases) {
 
 async function executePhase(
   phase: executionPhase,
-  environment: EnvironmentType
+  environment: EnvironmentType,
+  edges: Edge[]
 ) {
   const startedAt = new Date();
   const node = JSON.parse(phase.node) as AppNode;
-  setupEnvirontmentForPhase(node, environment);
+  setupEnvirontmentForPhase(node, environment, edges);
 
   await prisma.executionPhase.update({
     where: { id: phase.id },
@@ -125,19 +126,43 @@ async function executePhase(
   });
 
   const success = await executedPhase(phase, node, environment);
+  const outputs = environment.phases[node.id].outputs;
   const completedAt = new Date();
   const creditsConsumed = TaskRegistry[node.data.type].credits; // Calculate based on actual task execution
 
+  await finalizePhaseExecution(
+    phase.id,
+    success,
+    outputs,
+    completedAt,
+    creditsConsumed
+  );
+
+  return { success, creditsConsumed };
+}
+
+async function finalizePhaseExecution(
+  phaseId: string,
+  success: boolean,
+  outputs: Record<string, string>,
+  completedAt: Date,
+  creditsConsumed: number
+) {
+  const finalStatus = success
+    ? ExecutionPhasedStatus.COMPLETED
+    : ExecutionPhasedStatus.FAILED;
+
   await prisma.executionPhase.update({
-    where: { id: phase.id },
+    where: {
+      id: phaseId,
+    },
     data: {
-      status: ExecutionPhasedStatus.COMPLETED,
+      status: finalStatus,
       completedAt,
+      outputs: JSON.stringify(outputs),
       creditsConsumed,
     },
   });
-
-  return { success: true, creditsConsumed };
 }
 
 async function finalizedWorkflowExecution(
@@ -195,7 +220,8 @@ async function executedPhase(
 
 function setupEnvirontmentForPhase(
   node: AppNode,
-  environment: EnvironmentType
+  environment: EnvironmentType,
+  edges: Edge[]
 ) {
   environment.phases[node.id] = {
     inputs: {},
@@ -212,10 +238,35 @@ function setupEnvirontmentForPhase(
 
   for (const input of inputs) {
     if (input.type === TaskParamType.BROWSER_INSTANCE) continue;
+
+    // Check for connected edges first (higher priority)
+    const connectedEdge = edges.find(
+      (edge) => edge.target === node.id && edge.targetHandle === input.name
+    );
+
+    if (connectedEdge) {
+      // Get output value from connected node
+      const outputValue =
+        environment.phases[connectedEdge.source]?.outputs?.[
+          connectedEdge.sourceHandle!
+        ];
+
+      if (outputValue !== undefined) {
+        environment.phases[node.id].inputs[input.name] = outputValue;
+        console.log(`✓ Connected input "${input.name}" from previous node`);
+      } else {
+        console.log(
+          `✗ Connected edge exists but no output value for "${input.name}"`
+        );
+      }
+      continue;
+    }
+
+    // No connected edge, use static value from node data
     const inputValue = node.data.inputs[input.name];
     if (inputValue) {
       environment.phases[node.id].inputs[input.name] = inputValue;
-      console.log(`✓ Set input "${input.name}" = "${inputValue}"`);
+      console.log(`✓ Set static input "${input.name}" = "${inputValue}"`);
     } else {
       console.log(`✗ Missing input "${input.name}"`);
     }
@@ -230,6 +281,9 @@ function createExecutionEnvironment(
 ) {
   return {
     getInput: (name: string) => environment.phases[node.id].inputs[name],
+    setOutput: (name: string, value: string) => {
+      environment.phases[node.id].outputs[name] = value;
+    },
     getBrowser: () => environment.browser || null,
     setBrowser: (browser: Browser) => {
       environment.browser = browser;

@@ -44,22 +44,23 @@ model WorkflowExecution {
   createdAt       DateTime         @default(now())
   startedAt       DateTime?
   completedAt     DateTime?
+  definition      String           @default("{}")
   workflow        Workflow         @relation(fields: [workflowId], references: [id], onDelete: Cascade)
   phases          executionPhase[]
   creditsConsumed Int              @default(0)
 }
 
 model executionPhase {
-  id           String    @id @default(cuid())
-  userId       String
-  status       String
-  number       Int
-  node         String
-  name         String
-  startedAt    DateTime?
-  completedAt  DateTime?
-  inputs       String?
-  outputs      String?
+  id          String    @id @default(cuid())
+  userId      String
+  status      String
+  number      Int
+  node        String
+  name        String
+  startedAt   DateTime?
+  completedAt DateTime?
+  inputs      String?
+  outputs     String?
 
   creditsConsumed     Int?
   workflowExecutionId String
