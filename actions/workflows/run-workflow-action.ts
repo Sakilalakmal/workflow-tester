@@ -65,6 +65,7 @@ export async function RunWorkFlow(form: {
         status: WorkflowExecutionStatus.PENDING,
         startedAt: new Date(),
         trigger: WorkflowExecutionTrigger.MANUAL,
+        definition: definition,
         phases: {
           create: executionPlan.flatMap((phase) => {
             return phase.nodes.flatMap((node) => {
@@ -84,18 +85,18 @@ export async function RunWorkFlow(form: {
         phases: true,
       },
     });
-    
+
     console.log("Execution created successfully:", execution);
-    
+
     if (!execution) {
       throw new Error("workflow execution not created");
     }
-    
+
     // Execute the workflow asynchronously
     ExecuteWorkFlow(execution.id).catch((error) => {
       console.error("Error executing workflow:", error);
     });
-    
+
     return execution;
   } catch (error) {
     console.error("Error creating workflow execution:", error);
